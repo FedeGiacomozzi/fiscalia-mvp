@@ -22,7 +22,7 @@ steps:
       - --platform=managed
       - --allow-unauthenticated
       - --set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest
-      - --set-env-vars=GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+      - --set-env-vars=GOOGLE_CLOUD_PROJECT=fiscalia-mvp-bf46c
 
 images:
   - us-central1-docker.pkg.dev/$PROJECT_ID/fiscalia-backend/fiscalia-backend:$COMMIT_SHA
