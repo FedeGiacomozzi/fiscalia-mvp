@@ -3,6 +3,7 @@ import json
 import os
 import re
 
+import httpx
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import secretmanager
@@ -37,7 +38,7 @@ _openai_client: OpenAI | None = None
 def get_openai_client() -> OpenAI:
     global _openai_client
     if _openai_client is None:
-        _openai_client = OpenAI(api_key=_get_openai_api_key())
+        _openai_client = OpenAI(api_key=_get_openai_api_key(), http_client=httpx.Client())
     return _openai_client
 
 
