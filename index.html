@@ -836,7 +836,7 @@ body {
       <div class="web-body">
         <div class="web-sidebar">
           <div class="web-sidebar-label">General</div>
-          <div class="web-sidebar-item active">
+          <div class="web-sidebar-item active" id="wb-item-inicio" onclick="showWebPanel('dash')">
             <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Inicio
           </div>
           <div class="web-sidebar-item">
@@ -848,8 +848,8 @@ body {
             <span class="web-sidebar-badge">8</span>
           </div>
           <div class="web-sidebar-label">Reportes</div>
-          <div class="web-sidebar-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Actividad
+          <div class="web-sidebar-item" id="wb-item-reportes" onclick="showWebPanel('reports')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Reportes
           </div>
           <div class="web-sidebar-item">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Exportar ERP
@@ -860,29 +860,76 @@ body {
           </div>
         </div>
         <div class="web-main">
-          <div class="web-page-title">Panel del estudio</div>
-          <div class="web-page-sub">Mayo 2026 · Estudio Fernández y Asociados · 32 clientes activos</div>
-          <div class="web-stats">
-            <div class="web-stat v"><div class="web-stat-label">Clientes activos</div><div class="web-stat-val">32</div><div class="web-stat-delta up">↑ +4 este mes</div></div>
-            <div class="web-stat t"><div class="web-stat-label">Facturas procesadas</div><div class="web-stat-val" id="web-facturas-total">1.847</div><div class="web-stat-delta up">↑ 94% vía ARCA</div></div>
-            <div class="web-stat w"><div class="web-stat-label">Pendientes revisión</div><div class="web-stat-val">8</div><div class="web-stat-delta down">↓ Requieren acción</div></div>
-            <div class="web-stat e"><div class="web-stat-label">Horas ahorradas</div><div class="web-stat-val">63h</div><div class="web-stat-delta up">↑ Este mes</div></div>
+
+          <!-- ── Panel: Dashboard (default) ── -->
+          <div id="web-dash-panel">
+            <div class="web-page-title">Panel del estudio</div>
+            <div class="web-page-sub">Mayo 2026 · Estudio Fernández y Asociados · 32 clientes activos</div>
+            <div class="web-stats">
+              <div class="web-stat v"><div class="web-stat-label">Clientes activos</div><div class="web-stat-val">32</div><div class="web-stat-delta up">↑ +4 este mes</div></div>
+              <div class="web-stat t"><div class="web-stat-label">Facturas procesadas</div><div class="web-stat-val" id="web-facturas-total">1.847</div><div class="web-stat-delta up">↑ 94% vía ARCA</div></div>
+              <div class="web-stat w"><div class="web-stat-label">Pendientes revisión</div><div class="web-stat-val">8</div><div class="web-stat-delta down">↓ Requieren acción</div></div>
+              <div class="web-stat e"><div class="web-stat-label">Horas ahorradas</div><div class="web-stat-val">63h</div><div class="web-stat-delta up">↑ Este mes</div></div>
+            </div>
+            <div class="web-table-header">
+              <div class="web-table-title">Clientes — Mayo 2026</div>
+              <input class="web-search" placeholder="🔍  Buscar cliente...">
+            </div>
+            <table class="web-table">
+              <thead><tr><th>Cliente</th><th>Facturas</th><th>Total gastado</th><th>IVA estimado</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="web-tabla-clientes">
+                <tr><td><div class="client-name">Daniela Kostic</div><div class="client-type">RI · Gastronomía</div></td><td>47</td><td>$2.1M</td><td style="color:var(--warn);">$148.200</td><td><span class="status-pill status-ok">● Al día</span></td><td><button class="web-action-btn" onclick="show('web-client')">Ver →</button></td></tr>
+                <tr><td><div class="client-name">Martín Rodríguez</div><div class="client-type">Monotributista · Servicios</div></td><td>12</td><td>$480K</td><td style="color:var(--good);">$0</td><td><span class="status-pill status-ok">● Al día</span></td><td><button class="web-action-btn">Ver →</button></td></tr>
+                <tr><td><div class="client-name">Ferretería El Tornillo</div><div class="client-type">RI · Comercio</div></td><td>89</td><td>$5.8M</td><td style="color:var(--warn);">$320.400</td><td><span class="status-pill status-warn">● Revisar</span></td><td><button class="web-action-btn">Ver →</button></td></tr>
+                <tr><td><div class="client-name">Laura Méndez</div><div class="client-type">Monotributista · Salud</div></td><td>8</td><td>$210K</td><td style="color:var(--good);">$0</td><td><span class="status-pill status-err">● Sin actividad</span></td><td><button class="web-action-btn">Ver →</button></td></tr>
+                <tr><td><div class="client-name">Tech Consultores SRL</div><div class="client-type">RI · Tecnología</div></td><td>134</td><td>$12.4M</td><td style="color:var(--bad);">$891.000</td><td><span class="status-pill status-warn">● Revisar</span></td><td><button class="web-action-btn">Ver →</button></td></tr>
+              </tbody>
+            </table>
           </div>
-          <div class="web-table-header">
-            <div class="web-table-title">Clientes — Mayo 2026</div>
-            <input class="web-search" placeholder="🔍  Buscar cliente...">
+
+          <!-- ── Panel: Reportes ── -->
+          <div id="web-reports-panel" style="display:none;">
+            <div class="web-page-title">Reportes</div>
+            <div class="web-page-sub" id="rep-page-sub">Análisis por cliente · mes actual</div>
+
+            <!-- Selector de cliente -->
+            <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+              <span style="font-size:11px;color:var(--t3);">Cliente:</span>
+              <select id="rep-client-select" class="web-search" style="width:220px;cursor:pointer;color:var(--text);background:var(--s2);" onchange="updateReport()">
+                <option value="real">Daniela K. (REAL)</option>
+                <option value="daniela">Daniela Kostic</option>
+                <option value="martin">Martín Rodríguez</option>
+                <option value="ferreteria">Ferretería El Tornillo</option>
+                <option value="laura">Laura Méndez</option>
+                <option value="tech">Tech Consultores SRL</option>
+              </select>
+            </div>
+
+            <!-- 3 KPI cards -->
+            <div class="web-stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px;">
+              <div class="web-stat v"><div class="web-stat-label">Total Facturas</div><div class="web-stat-val" id="rep-count">—</div></div>
+              <div class="web-stat t"><div class="web-stat-label">Total Gastado</div><div class="web-stat-val" id="rep-total">—</div></div>
+              <div class="web-stat w"><div class="web-stat-label">IVA Estimado</div><div class="web-stat-val" id="rep-iva">—</div></div>
+            </div>
+
+            <!-- Gráfico de barras -->
+            <div style="background:var(--s2);border-radius:12px;padding:16px 18px;border:1px solid var(--border2);margin-bottom:18px;">
+              <div class="web-table-title" style="margin-bottom:14px;">Gastos por categoría</div>
+              <canvas id="rep-chart" height="110"></canvas>
+            </div>
+
+            <!-- Últimas 5 facturas -->
+            <div class="web-table-header" style="margin-bottom:10px;">
+              <div class="web-table-title">Últimas 5 facturas</div>
+            </div>
+            <table class="web-table">
+              <thead><tr><th>Proveedor</th><th>Fecha</th><th>N° Factura</th><th>Categoría</th><th>Tipo</th><th>Monto</th></tr></thead>
+              <tbody id="rep-table-body">
+                <tr><td colspan="6" style="text-align:center;color:var(--t3);font-size:11px;">Cargando…</td></tr>
+              </tbody>
+            </table>
           </div>
-          <table class="web-table">
-            <thead><tr><th>Cliente</th><th>Facturas</th><th>Total gastado</th><th>IVA estimado</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody id="web-tabla-clientes">
-              <!-- fila real de Firestore se inserta aquí dinámicamente -->
-              <tr><td><div class="client-name">Daniela Kostic</div><div class="client-type">RI · Gastronomía</div></td><td>47</td><td>$2.1M</td><td style="color:var(--warn);">$148.200</td><td><span class="status-pill status-ok">● Al día</span></td><td><button class="web-action-btn" onclick="show('web-client')">Ver →</button></td></tr>
-              <tr><td><div class="client-name">Martín Rodríguez</div><div class="client-type">Monotributista · Servicios</div></td><td>12</td><td>$480K</td><td style="color:var(--good);">$0</td><td><span class="status-pill status-ok">● Al día</span></td><td><button class="web-action-btn">Ver →</button></td></tr>
-              <tr><td><div class="client-name">Ferretería El Tornillo</div><div class="client-type">RI · Comercio</div></td><td>89</td><td>$5.8M</td><td style="color:var(--warn);">$320.400</td><td><span class="status-pill status-warn">● Revisar</span></td><td><button class="web-action-btn">Ver →</button></td></tr>
-              <tr><td><div class="client-name">Laura Méndez</div><div class="client-type">Monotributista · Salud</div></td><td>8</td><td>$210K</td><td style="color:var(--good);">$0</td><td><span class="status-pill status-err">● Sin actividad</span></td><td><button class="web-action-btn">Ver →</button></td></tr>
-              <tr><td><div class="client-name">Tech Consultores SRL</div><div class="client-type">RI · Tecnología</div></td><td>134</td><td>$12.4M</td><td style="color:var(--bad);">$891.000</td><td><span class="status-pill status-warn">● Revisar</span></td><td><button class="web-action-btn">Ver →</button></td></tr>
-            </tbody>
-          </table>
+
         </div>
       </div>
     </div>
@@ -980,6 +1027,9 @@ body {
   <div class="footer-sub">Negocios Digitales 2026 · Grupo 7 · Sprint 1 — Wireframes interactivos</div>
 </div>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
 <!-- Firebase JS SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -1001,6 +1051,9 @@ const BACKEND_URL = "https://fiscalia-backend-405077528314.southamerica-east1.ru
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
+let _facturasDocs = [];
+let _repChart     = null;
 
 // ── Screen navigation ────────────────────────────────────────────────────────
 function show(id) {
@@ -1235,6 +1288,8 @@ function initWebDashboard() {
   db.collection('facturas')
     .orderBy('timestamp', 'desc')
     .onSnapshot(snapshot => {
+      _facturasDocs = snapshot.docs.map(d => d.data());
+
       const now      = new Date();
       const curYear  = now.getFullYear();
       const curMonth = now.getMonth();
@@ -1403,6 +1458,195 @@ function initWebClientView() {
       set('web-client-export-sub',
         `${aprobadas} facturas aprobadas · ${revisar} pendientes de revisión · Período: ${mesLabel}`);
     }, err => console.error('Vista cliente error:', err));
+}
+
+// ── Web Dashboard — panel switching ──────────────────────────────────────────
+function showWebPanel(panel) {
+  const dash    = document.getElementById('web-dash-panel');
+  const reports = document.getElementById('web-reports-panel');
+  const itmInicio   = document.getElementById('wb-item-inicio');
+  const itmReportes = document.getElementById('wb-item-reportes');
+  if (panel === 'reports') {
+    dash.style.display    = 'none';
+    reports.style.display = '';
+    itmInicio.classList.remove('active');
+    itmReportes.classList.add('active');
+    updateReport();
+  } else {
+    reports.style.display = 'none';
+    dash.style.display    = '';
+    itmReportes.classList.remove('active');
+    itmInicio.classList.add('active');
+  }
+}
+
+// ── Hardcoded client data for reports ────────────────────────────────────────
+const _clientData = {
+  daniela: {
+    cats: { servicios:480000, insumos:820000, alquiler:210000, logistica:95000, otros:62000 },
+    rows: [
+      { proveedor:'Distribuidora Norte', fecha:'15/05/2026', numero_factura:'0001-00034521', categoria:'insumos',   tipo:'A', monto_total:42300 },
+      { proveedor:'Alquileres Plaza',    fecha:'01/05/2026', numero_factura:'0002-00001200', categoria:'alquiler',  tipo:'A', monto_total:105000 },
+      { proveedor:'TechServ SRL',        fecha:'28/04/2026', numero_factura:'0001-00089001', categoria:'servicios', tipo:'B', monto_total:18700 },
+      { proveedor:'Logística Express',   fecha:'22/04/2026', numero_factura:'0003-00004512', categoria:'logistica', tipo:'A', monto_total:31500 },
+      { proveedor:'Papelería Central',   fecha:'10/04/2026', numero_factura:'0001-00072300', categoria:'insumos',   tipo:'C', monto_total:8900 },
+    ]
+  },
+  martin: {
+    cats: { servicios:310000, insumos:45000, alquiler:0, logistica:28000, otros:15000 },
+    rows: [
+      { proveedor:'CloudHost SA',      fecha:'18/05/2026', numero_factura:'0001-00112233', categoria:'servicios', tipo:'A', monto_total:22000 },
+      { proveedor:'Papelería Norte',   fecha:'12/05/2026', numero_factura:'0001-00045001', categoria:'insumos',   tipo:'B', monto_total:4500 },
+      { proveedor:'Correo Privado',    fecha:'05/05/2026', numero_factura:'0002-00009800', categoria:'logistica', tipo:'A', monto_total:3200 },
+      { proveedor:'Software Pro',      fecha:'29/04/2026', numero_factura:'0001-00088100', categoria:'servicios', tipo:'A', monto_total:95000 },
+      { proveedor:'Librería El Saber', fecha:'20/04/2026', numero_factura:'0001-00033300', categoria:'otros',     tipo:'C', monto_total:1800 },
+    ]
+  },
+  ferreteria: {
+    cats: { servicios:120000, insumos:3200000, alquiler:480000, logistica:890000, otros:42000 },
+    rows: [
+      { proveedor:'Aceros del Sur',    fecha:'20/05/2026', numero_factura:'0001-00234100', categoria:'insumos',   tipo:'A', monto_total:189000 },
+      { proveedor:'Transporte Rápido', fecha:'15/05/2026', numero_factura:'0004-00009100', categoria:'logistica', tipo:'A', monto_total:67000 },
+      { proveedor:'Alquileres Zona',   fecha:'01/05/2026', numero_factura:'0002-00000800', categoria:'alquiler',  tipo:'A', monto_total:240000 },
+      { proveedor:'Pinturería Total',  fecha:'25/04/2026', numero_factura:'0001-00091400', categoria:'insumos',   tipo:'B', monto_total:38900 },
+      { proveedor:'Electricidad SA',   fecha:'18/04/2026', numero_factura:'0001-00187200', categoria:'servicios', tipo:'A', monto_total:55000 },
+    ]
+  },
+  laura: {
+    cats: { servicios:145000, insumos:32000, alquiler:0, logistica:0, otros:18000 },
+    rows: [
+      { proveedor:'Laboratorio Sur',    fecha:'10/05/2026', numero_factura:'0001-00023400', categoria:'servicios', tipo:'B', monto_total:28000 },
+      { proveedor:'Insumos Médicos',    fecha:'03/05/2026', numero_factura:'0001-00056700', categoria:'insumos',   tipo:'A', monto_total:12500 },
+      { proveedor:'Consultoría Salud',  fecha:'22/04/2026', numero_factura:'0001-00009800', categoria:'servicios', tipo:'A', monto_total:45000 },
+      { proveedor:'Editorial Médica',   fecha:'15/04/2026', numero_factura:'0001-00034500', categoria:'otros',     tipo:'C', monto_total:8900 },
+      { proveedor:'Farmacia Mayorista', fecha:'08/04/2026', numero_factura:'0001-00078900', categoria:'insumos',   tipo:'A', monto_total:9500 },
+    ]
+  },
+  tech: {
+    cats: { servicios:7800000, insumos:1200000, alquiler:960000, logistica:380000, otros:95000 },
+    rows: [
+      { proveedor:'Amazon Web Services', fecha:'22/05/2026', numero_factura:'INV-20260522',  categoria:'servicios', tipo:'A', monto_total:485000 },
+      { proveedor:'Cisco Systems',       fecha:'18/05/2026', numero_factura:'0001-00345800', categoria:'insumos',   tipo:'A', monto_total:320000 },
+      { proveedor:'Oficinas Premium',    fecha:'01/05/2026', numero_factura:'0003-00000230', categoria:'alquiler',  tipo:'A', monto_total:480000 },
+      { proveedor:'DHL Express',         fecha:'28/04/2026', numero_factura:'0007-00091100', categoria:'logistica', tipo:'A', monto_total:95000 },
+      { proveedor:'Microsoft Corp',      fecha:'20/04/2026', numero_factura:'INV-20260420',  categoria:'servicios', tipo:'A', monto_total:890000 },
+    ]
+  },
+};
+
+function renderRepChart(cats) {
+  const ctx = document.getElementById('rep-chart');
+  if (!ctx) return;
+  if (_repChart) { _repChart.destroy(); _repChart = null; }
+  const labels = ['Servicios','Insumos','Alquiler','Logística','Otros'];
+  const keys   = ['servicios','insumos','alquiler','logistica','otros'];
+  _repChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: keys.map(k => cats[k] || 0),
+        backgroundColor: [
+          'rgba(124,58,237,0.75)',
+          'rgba(0,245,196,0.65)',
+          'rgba(255,209,102,0.65)',
+          'rgba(99,102,241,0.65)',
+          'rgba(156,163,175,0.55)',
+        ],
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: c => new Intl.NumberFormat('es-AR', {
+              style:'currency', currency:'ARS', maximumFractionDigits:0
+            }).format(c.parsed.y)
+          }
+        }
+      },
+      scales: {
+        x: { grid:{ color:'rgba(255,255,255,0.06)' }, ticks:{ color:'#9ca3af', font:{ size:11 } } },
+        y: {
+          grid:{ color:'rgba(255,255,255,0.06)' },
+          ticks:{
+            color:'#9ca3af', font:{ size:11 },
+            callback: v => v >= 1_000_000 ? '$'+(v/1_000_000).toFixed(1)+'M'
+                         : v >= 1_000     ? '$'+Math.round(v/1_000)+'K' : '$'+v
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateReport() {
+  const sel = document.getElementById('rep-client-select');
+  const key = sel ? sel.value : 'real';
+  const fmt = n => new Intl.NumberFormat('es-AR', {
+    style:'currency', currency:'ARS', maximumFractionDigits:0
+  }).format(n);
+  const fmtShort = n => {
+    if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M';
+    if (n >= 1_000)     return '$' + Math.round(n / 1_000) + 'K';
+    return fmt(n);
+  };
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+  if (key === 'real') {
+    const docs = _facturasDocs;
+    let totalGastado = 0, ivaEstimado = 0;
+    const cats = { servicios:0, insumos:0, alquiler:0, logistica:0, otros:0 };
+    docs.forEach(d => {
+      totalGastado += (d.monto_total || 0);
+      ivaEstimado  += (d.iva_monto  || 0);
+      const cat = (d.categoria || 'otros').toLowerCase();
+      if (cats[cat] !== undefined) cats[cat] += (d.monto_total || 0);
+      else cats.otros += (d.monto_total || 0);
+    });
+    set('rep-count', docs.length);
+    set('rep-total', fmtShort(totalGastado));
+    set('rep-iva',   fmtShort(ivaEstimado));
+    renderRepChart(cats);
+    const tbody = document.getElementById('rep-table-body');
+    if (!tbody) return;
+    if (!docs.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--t3);font-size:11px;">Sin facturas aún.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = docs.slice(0,5).map(d => `
+      <tr>
+        <td>${esc(d.proveedor || '—')}</td>
+        <td>${esc(d.fecha || '—')}</td>
+        <td style="font-size:10px;">${esc(d.numero_factura || '—')}</td>
+        <td><span style="font-size:10px;background:rgba(124,58,237,0.15);color:var(--p3);padding:1px 6px;border-radius:20px;">${esc(d.categoria || '—')}</span></td>
+        <td>${esc(d.tipo || '—')}</td>
+        <td style="text-align:right;color:var(--acc);">${d.monto_total != null ? fmt(d.monto_total) : '—'}</td>
+      </tr>`).join('');
+  } else {
+    const cd = _clientData[key];
+    if (!cd) return;
+    const totalGastado = Object.values(cd.cats).reduce((a,b) => a+b, 0);
+    set('rep-count', cd.rows.length + '+');
+    set('rep-total', fmtShort(totalGastado));
+    set('rep-iva',   fmtShort(totalGastado * 0.21));
+    renderRepChart(cd.cats);
+    const tbody = document.getElementById('rep-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = cd.rows.map(d => `
+      <tr>
+        <td>${esc(d.proveedor)}</td>
+        <td>${esc(d.fecha)}</td>
+        <td style="font-size:10px;">${esc(d.numero_factura)}</td>
+        <td><span style="font-size:10px;background:rgba(124,58,237,0.15);color:var(--p3);padding:1px 6px;border-radius:20px;">${esc(d.categoria)}</span></td>
+        <td>${esc(d.tipo)}</td>
+        <td style="text-align:right;color:var(--acc);">${fmt(d.monto_total)}</td>
+      </tr>`).join('');
+  }
 }
 
 // ── Init — arranca al cargar la página ───────────────────────────────────────
