@@ -560,18 +560,18 @@ body {
           <div class="m-predict">
             <div class="m-predict-tag">⚡ IA Predictiva</div>
             <div class="m-predict-label">Estimación IVA a pagar</div>
-            <div class="m-predict-val">$<span>148.200</span></div>
-            <div class="m-predict-date">Vence el <strong>18 de junio</strong> · Calculado sobre 47 facturas</div>
+            <div class="m-predict-val">$<span id="home-iva-pagar">—</span></div>
+            <div class="m-predict-date">Calculado sobre <strong id="home-predict-count">—</strong> facturas del mes</div>
             <div class="m-progress-wrap">
-              <div class="m-progress-labels"><span>Mes en curso</span><span>73% completado</span></div>
-              <div class="m-progress-bar"><div class="m-progress-fill" style="width:73%"></div></div>
+              <div class="m-progress-labels"><span>Mes en curso</span><span id="home-progress-label">—</span></div>
+              <div class="m-progress-bar"><div class="m-progress-fill" id="home-progress-fill" style="width:0%"></div></div>
             </div>
           </div>
           <div class="m-grid">
             <div class="m-card v"><div class="m-card-label">Facturas recibidas</div><div class="m-card-val" id="home-count">—</div><div class="m-card-sub" id="home-count-sub">Cargando…</div></div>
-            <div class="m-card t"><div class="m-card-label">Total gastado</div><div class="m-card-val">$2.1M</div><div class="m-card-sub">Mayo 2026</div></div>
-            <div class="m-card w"><div class="m-card-label">IVA crédito</div><div class="m-card-val">$314K</div><div class="m-card-sub">Acumulado</div></div>
-            <div class="m-card e"><div class="m-card-label">Alertas activas</div><div class="m-card-val">2</div><div class="m-card-sub">Ver detalle →</div></div>
+            <div class="m-card t"><div class="m-card-label">Total gastado</div><div class="m-card-val" id="home-total">—</div><div class="m-card-sub" id="home-total-sub">mes actual</div></div>
+            <div class="m-card w"><div class="m-card-label">IVA crédito</div><div class="m-card-val" id="home-iva-credito">—</div><div class="m-card-sub">Fact. tipo A</div></div>
+            <div class="m-card e"><div class="m-card-label">Alertas activas</div><div class="m-card-val" id="home-alertas">—</div><div class="m-card-sub">Sin N° factura</div></div>
           </div>
           <div class="m-section-title">Últimas facturas procesadas</div>
           <!-- Firestore live list -->
@@ -743,15 +743,15 @@ body {
             <div class="m-alert-icon">✅</div>
             <div><div class="m-alert-title">IVA crédito bien acumulado</div><div class="m-alert-body">Tu IVA crédito de $314K compensa bien el débito proyectado. Vas a pagar menos de lo esperado. Sin acción necesaria.</div></div>
           </div>
-          <div class="m-section-title" style="margin:16px 0 10px;">Proyección fiscal junio</div>
+          <div class="m-section-title" style="margin:16px 0 10px;">Proyección fiscal — mes actual</div>
           <div style="background:var(--s2);border-radius:14px;padding:14px 16px;border:1px solid var(--border2);">
             <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-              <div><div style="font-size:10px;color:var(--t3);margin-bottom:3px;">IVA DÉBITO ESTIMADO</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--bad);">$462.400</div></div>
-              <div style="text-align:right;"><div style="font-size:10px;color:var(--t3);margin-bottom:3px;">IVA CRÉDITO ACUMULADO</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--good);">$314.200</div></div>
+              <div><div style="font-size:10px;color:var(--t3);margin-bottom:3px;">IVA DÉBITO ESTIMADO</div><div id="pred-iva-debito" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--bad);">—</div></div>
+              <div style="text-align:right;"><div style="font-size:10px;color:var(--t3);margin-bottom:3px;">IVA CRÉDITO ACUMULADO</div><div id="pred-iva-credito" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--good);">—</div></div>
             </div>
             <div style="height:1px;background:var(--border2);margin-bottom:10px;"></div>
-            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-size:12px;color:var(--t2);">Saldo a pagar estimado</div><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--warn);">$148.200</div></div>
-            <div style="font-size:10px;color:var(--t3);margin-top:4px;text-align:right;">Vence 18/06 · Actualizado hace 1h</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-size:12px;color:var(--t2);">Saldo a pagar estimado</div><div id="pred-saldo" style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--warn);">—</div></div>
+            <div id="pred-updated" style="font-size:10px;color:var(--t3);margin-top:4px;text-align:right;">Calculando…</div>
           </div>
         </div>
         <div class="m-bottom-nav">
@@ -1079,6 +1079,74 @@ function renderResult(d) {
 }
 
 
+// ── Cálculo de métricas desde snapshot ──────────────────────────────────────
+function updateMetrics(snapshot) {
+  const now      = new Date();
+  const curYear  = now.getFullYear();
+  const curMonth = now.getMonth();
+
+  const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+  const progressPct = Math.round((now.getDate() / daysInMonth) * 100);
+
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio',
+                 'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  let totalGastado = 0, ivaCredito = 0, alertas = 0, countMes = 0;
+
+  snapshot.forEach(doc => {
+    const d = doc.data();
+    let inMes = false;
+
+    if (d.timestamp?.toDate) {
+      const ts = d.timestamp.toDate();
+      inMes = ts.getFullYear() === curYear && ts.getMonth() === curMonth;
+    } else if (d.fecha) {
+      const p = d.fecha.split('/');
+      if (p.length === 3)
+        inMes = parseInt(p[2]) === curYear && (parseInt(p[1]) - 1) === curMonth;
+    }
+
+    if (!inMes) return;
+    countMes++;
+    totalGastado += (d.monto_total || 0);
+    if (d.tipo === 'A') ivaCredito += (d.iva_monto || 0);
+    const nro = (d.numero_factura || '').trim();
+    if (!nro || nro === 'N/A' || nro === 'N/D' || nro === '-') alertas++;
+  });
+
+  const ivaDebito  = totalGastado * 0.21;
+  const ivaAPagar  = Math.max(0, ivaDebito - ivaCredito);
+
+  const fmt = n => new Intl.NumberFormat('es-AR', {
+    style: 'currency', currency: 'ARS', maximumFractionDigits: 0
+  }).format(n);
+
+  const fmtShort = n => {
+    if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M';
+    if (n >= 1_000)     return '$' + Math.round(n / 1_000) + 'K';
+    return fmt(n);
+  };
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+  // Home metrics
+  set('home-total',          fmtShort(totalGastado));
+  set('home-total-sub',      MESES[curMonth] + ' ' + curYear);
+  set('home-iva-credito',    fmtShort(ivaCredito));
+  set('home-alertas',        alertas);
+  set('home-iva-pagar',      fmt(ivaAPagar).replace(/[^\d.,]/g, '').replace(',', '.'));
+  set('home-predict-count',  countMes);
+  set('home-progress-label', progressPct + '% completado');
+  const fill = document.getElementById('home-progress-fill');
+  if (fill) fill.style.width = progressPct + '%';
+
+  // Predictivo metrics
+  set('pred-iva-debito',  fmt(ivaDebito));
+  set('pred-iva-credito', fmt(ivaCredito));
+  set('pred-saldo',       fmt(ivaAPagar));
+  set('pred-updated',     'Actualizado ahora · ' + countMes + ' facturas del mes');
+}
+
 // ── Firestore — listener único para todas las pantallas ─────────────────────
 function initFirestoreListener() {
   const homeList    = document.getElementById('homeFacturasList');
@@ -1091,9 +1159,10 @@ function initFirestoreListener() {
     .limit(20)
     .onSnapshot(
       snapshot => {
-        // ── Contador Home ──
-        counter.textContent  = snapshot.size;
+        // ── Contador total + métricas ──
+        counter.textContent    = snapshot.size;
         counterSub.textContent = snapshot.size === 1 ? 'procesada' : 'procesadas';
+        updateMetrics(snapshot);
 
         if (snapshot.empty) {
           const emptyMsg = `
