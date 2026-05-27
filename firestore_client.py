@@ -8,7 +8,7 @@ _db = None
 def get_db() -> firestore.Client:
     global _db
     if _db is None:
-        _db = firestore.Client(project="fiscalia-mvp-bf46c")
+        _db = firestore.Client(project="fiscalia-mvp")
     return _db
 
 
