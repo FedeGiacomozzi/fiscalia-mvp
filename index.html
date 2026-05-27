@@ -929,30 +929,31 @@ body {
         <div class="web-main">
           <div class="web-detail-header">
             <div class="web-detail-avatar">DK</div>
-            <div><div class="web-detail-name">Daniela Kostic</div><div class="web-detail-meta">CUIT 20-38471922-4 · RI · Gastronomía · 47 facturas este mes</div></div>
+            <div><div class="web-detail-name">Daniela Kostic</div><div class="web-detail-meta">CUIT 20-38471922-4 · RI · Gastronomía · <span id="wc-count">—</span> facturas</div></div>
             <div class="web-detail-actions">
               <button class="web-action-btn">Enviar resumen</button>
               <button class="web-action-btn primary">Exportar a Tango</button>
             </div>
           </div>
           <div class="web-detail-grid">
-            <div class="web-stat v"><div class="web-stat-label">Total gastado mayo</div><div class="web-stat-val">$2.1M</div><div class="web-stat-delta up">↑ +12% vs abril</div></div>
-            <div class="web-stat t"><div class="web-stat-label">IVA crédito</div><div class="web-stat-val">$314K</div><div class="web-stat-sub">Computable</div></div>
-            <div class="web-stat w"><div class="web-stat-label">IVA a pagar est.</div><div class="web-stat-val" style="color:var(--warn)">$148K</div><div class="web-stat-sub">Vence 18/06</div></div>
+            <div class="web-stat v"><div class="web-stat-label">Total gastado</div><div class="web-stat-val" id="wc-total">—</div><div class="web-stat-sub" id="wc-mes-label">mes actual</div></div>
+            <div class="web-stat t"><div class="web-stat-label">IVA crédito</div><div class="web-stat-val" id="wc-iva-credito">—</div><div class="web-stat-sub">Fact. tipo A</div></div>
+            <div class="web-stat w"><div class="web-stat-label">IVA a pagar est.</div><div class="web-stat-val" id="wc-iva-pagar" style="color:var(--warn)">—</div><div class="web-stat-sub">mes actual</div></div>
           </div>
           <div class="web-table-header">
-            <div class="web-table-title">Comprobantes — Mayo 2026</div>
+            <div class="web-table-title" id="wc-table-title">Comprobantes</div>
             <div style="display:flex;gap:8px;">
               <button class="web-action-btn">Filtrar</button>
               <button class="web-action-btn primary">✓ Aprobar todas</button>
             </div>
           </div>
-          <div class="web-fac-row"><div class="web-fac-ico arca">⚡</div><div class="web-fac-info"><div class="web-fac-name">Edenor SA — Fact. A 0001-00842341</div><div class="web-fac-meta">12/05/2026 · ARCA · Servicios / Energía eléctrica</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="status-pill status-ok" style="font-size:10px;">✓ Aprobada</span><div class="web-fac-amount">$48.200</div></div></div>
-          <div class="web-fac-row"><div class="web-fac-ico arca">⚡</div><div class="web-fac-info"><div class="web-fac-name">Frigorífico Del Sur — Fact. B 0003-00012847</div><div class="web-fac-meta">11/05/2026 · ARCA · Mercadería / Carnes</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="status-pill status-ok" style="font-size:10px;">✓ Aprobada</span><div class="web-fac-amount">$124.500</div></div></div>
-          <div class="web-fac-row" style="border-color:rgba(255,209,102,0.25);background:rgba(255,209,102,0.04);"><div class="web-fac-ico" style="background:rgba(255,209,102,0.1);">⚠️</div><div class="web-fac-info"><div class="web-fac-name">Carnicería Don Pedro — Ticket manual</div><div class="web-fac-meta">09/05/2026 · Foto · Confianza IA 74% — Revisar categoría</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="status-pill status-warn" style="font-size:10px;">Revisar</span><div class="web-fac-amount">$67.000</div></div></div>
-          <div class="web-fac-row"><div class="web-fac-ico manual">📧</div><div class="web-fac-info"><div class="web-fac-name">Distribuidora Norte — Fact. A 0001-00003391</div><div class="web-fac-meta">08/05/2026 · Mail · Mercadería / Bebidas</div></div><div style="display:flex;align-items:center;gap:10px;"><span class="status-pill status-ok" style="font-size:10px;">✓ Aprobada</span><div class="web-fac-amount">$89.300</div></div></div>
+          <div id="web-client-comprobantes">
+            <div class="web-fac-row" style="justify-content:center;">
+              <div style="font-size:11px;color:var(--t3);">Cargando comprobantes…</div>
+            </div>
+          </div>
           <div class="web-export-bar">
-            <div class="web-export-info"><div class="web-export-title">Exportar al ERP</div><div class="web-export-sub">46 facturas aprobadas · 1 pendiente de revisión · Período: Mayo 2026</div></div>
+            <div class="web-export-info"><div class="web-export-title">Exportar al ERP</div><div class="web-export-sub" id="web-client-export-sub">Cargando…</div></div>
             <div class="web-export-btns">
               <button class="web-action-btn">CSV genérico</button>
               <button class="web-action-btn">Bejerman</button>
@@ -1307,9 +1308,107 @@ function initWebDashboard() {
     }, err => console.error('Web dashboard error:', err));
 }
 
+// ── Vista Cliente — comprobantes y totales reales desde Firestore ────────────
+function initWebClientView() {
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio',
+                 'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  const fmt = n => new Intl.NumberFormat('es-AR', {
+    style: 'currency', currency: 'ARS', maximumFractionDigits: 0
+  }).format(n);
+  const fmtShort = n => {
+    if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M';
+    if (n >= 1_000)     return '$' + Math.round(n / 1_000) + 'K';
+    return fmt(n);
+  };
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+  db.collection('facturas')
+    .orderBy('timestamp', 'desc')
+    .onSnapshot(snapshot => {
+      const now      = new Date();
+      const mesLabel = MESES[now.getMonth()] + ' ' + now.getFullYear();
+
+      const container = document.getElementById('web-client-comprobantes');
+      if (!container) return;
+
+      if (snapshot.empty) {
+        container.innerHTML = `
+          <div class="web-fac-row" style="justify-content:center;">
+            <div style="font-size:11px;color:var(--t3);">No hay comprobantes aún.</div>
+          </div>`;
+        set('wc-total', '—'); set('wc-iva-credito', '—'); set('wc-iva-pagar', '—');
+        set('wc-count', '0');
+        set('web-client-export-sub', 'Sin facturas · Período: ' + mesLabel);
+        return;
+      }
+
+      let totalGastado = 0, ivaCredito = 0, aprobadas = 0, revisar = 0;
+      container.innerHTML = '';
+
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        totalGastado += (d.monto_total || 0);
+        if (d.tipo === 'A') ivaCredito += (d.iva_monto || 0);
+
+        const nro = (d.numero_factura || '').trim();
+        const needsReview = d.tipo === 'B' || d.tipo === 'C'
+          || !nro || nro === 'N/A' || nro === 'N/D' || nro === '-';
+        needsReview ? revisar++ : aprobadas++;
+
+        const fecha  = d.fecha ||
+          (d.timestamp?.toDate ? d.timestamp.toDate().toLocaleDateString('es-AR') : '—');
+        const nombre = [d.proveedor, d.numero_factura].filter(Boolean).join(' — ');
+        const meta   = [fecha, d.categoria].filter(v => v && v !== '—').join(' · ');
+        const monto  = d.monto_total != null ? fmt(d.monto_total) : '—';
+
+        const tipoHtml = d.tipo
+          ? `<span style="font-size:9px;background:rgba(124,58,237,0.15);color:var(--p3);
+                          padding:2px 6px;border-radius:20px;font-weight:700;margin-left:4px;">
+               Fact. ${esc(d.tipo)}</span>`
+          : '';
+        const statusHtml = needsReview
+          ? `<span class="status-pill status-warn" style="font-size:10px;">Revisar</span>`
+          : `<span class="status-pill status-ok"  style="font-size:10px;">✓ Aprobada</span>`;
+        const rowStyle = needsReview
+          ? 'border-color:rgba(255,209,102,0.25);background:rgba(255,209,102,0.04);' : '';
+
+        const row = document.createElement('div');
+        row.className = 'web-fac-row';
+        row.style.cssText = rowStyle;
+        row.innerHTML = `
+          <div class="web-fac-ico foto">📸</div>
+          <div class="web-fac-info">
+            <div class="web-fac-name">${esc(nombre || 'Sin nombre')}${tipoHtml}</div>
+            <div class="web-fac-meta">${esc(meta)}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            ${statusHtml}
+            <div class="web-fac-amount">${esc(monto)}</div>
+          </div>`;
+        container.appendChild(row);
+      });
+
+      const ivaAPagar = Math.max(0, totalGastado * 0.21 - ivaCredito);
+
+      // Header stats
+      set('wc-total',       fmtShort(totalGastado));
+      set('wc-mes-label',   mesLabel);
+      set('wc-iva-credito', fmtShort(ivaCredito));
+      set('wc-iva-pagar',   fmtShort(ivaAPagar));
+      set('wc-count',       snapshot.size);
+      set('wc-table-title', 'Comprobantes — ' + mesLabel);
+
+      // Export bar
+      set('web-client-export-sub',
+        `${aprobadas} facturas aprobadas · ${revisar} pendientes de revisión · Período: ${mesLabel}`);
+    }, err => console.error('Vista cliente error:', err));
+}
+
 // ── Init — arranca al cargar la página ───────────────────────────────────────
 initFirestoreListener();
 initWebDashboard();
+initWebClientView();
 </script>
 </body>
 </html>
