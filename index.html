@@ -1052,7 +1052,6 @@ async function procesarFactura() {
     }
     const data = await res.json();
     renderResult(data);
-    prependCapturedItem(data);
   } catch (e) {
     const errEl = document.getElementById('captureError');
     errEl.textContent = '⚠️ ' + e.message;
@@ -1079,65 +1078,43 @@ function renderResult(d) {
   document.getElementById('captureResult').style.display = 'block';
 }
 
-// Añade la factura recién capturada al inicio de la lista "esta semana"
-function prependCapturedItem(d) {
-  const fmt = n => n != null
-    ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n)
-    : '—';
 
-  const item = document.createElement('div');
-  item.className = 'm-factura';
-  item.innerHTML = `
-    <div class="m-factura-ico foto">📸</div>
-    <div class="m-factura-info">
-      <div class="m-factura-name">${esc(d.proveedor || 'Sin proveedor')}</div>
-      <div class="m-factura-meta">Ahora · Confianza IA: alta</div>
-    </div>
-    <div class="m-factura-right">
-      <div class="m-factura-amount">${esc(fmt(d.monto_total))}</div>
-      <div class="m-factura-badge badge-foto">✓</div>
-    </div>
-  `;
-  const list = document.getElementById('captureWeekList');
-  list.insertBefore(item, list.firstChild);
-}
-
-// ── Firestore — Home live list ───────────────────────────────────────────────
-function initHomeDashboard() {
-  const list    = document.getElementById('homeFacturasList');
-  const counter = document.getElementById('home-count');
-  const counterSub = document.getElementById('home-count-sub');
+// ── Firestore — listener único para todas las pantallas ─────────────────────
+function initFirestoreListener() {
+  const homeList    = document.getElementById('homeFacturasList');
+  const captureList = document.getElementById('captureWeekList');
+  const counter     = document.getElementById('home-count');
+  const counterSub  = document.getElementById('home-count-sub');
 
   db.collection('facturas')
     .orderBy('timestamp', 'desc')
-    .limit(10)
+    .limit(20)
     .onSnapshot(
       snapshot => {
-        counter.textContent = snapshot.size;
-        counterSub.textContent = snapshot.size === 1 ? 'procesada hoy' : 'procesadas';
+        // ── Contador Home ──
+        counter.textContent  = snapshot.size;
+        counterSub.textContent = snapshot.size === 1 ? 'procesada' : 'procesadas';
 
         if (snapshot.empty) {
-          list.innerHTML = `
+          const emptyMsg = `
             <div class="m-factura" style="justify-content:center;">
-              <div style="font-size:11px;color:var(--t3);">
-                Aún no hay facturas. ¡Capturá la primera!
-              </div>
+              <div style="font-size:11px;color:var(--t3);">Aún no hay facturas. ¡Capturá la primera!</div>
             </div>`;
+          homeList.innerHTML    = emptyMsg;
+          captureList.innerHTML = emptyMsg;
           return;
         }
 
-        list.innerHTML = '';
-        snapshot.forEach(doc => {
-          const d = doc.data();
+        // ── Renderiza una fila de factura ──
+        const renderItem = (d) => {
           const monto = d.monto_total != null
             ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(d.monto_total)
             : '—';
           const fecha = d.fecha ||
             (d.timestamp?.toDate ? d.timestamp.toDate().toLocaleDateString('es-AR') : '—');
-
-          const item = document.createElement('div');
-          item.className = 'm-factura';
-          item.innerHTML = `
+          const div = document.createElement('div');
+          div.className = 'm-factura';
+          div.innerHTML = `
             <div class="m-factura-ico foto">📸</div>
             <div class="m-factura-info">
               <div class="m-factura-name">${esc(d.proveedor || 'Sin proveedor')}</div>
@@ -1146,18 +1123,29 @@ function initHomeDashboard() {
             <div class="m-factura-right">
               <div class="m-factura-amount">${esc(monto)}</div>
               ${d.tipo ? `<div class="m-factura-badge badge-foto">Fact. ${esc(d.tipo)}</div>` : ''}
-            </div>
-          `;
-          list.appendChild(item);
+            </div>`;
+          return div;
+        };
+
+        // ── Actualiza Home (últimas 10) ──
+        homeList.innerHTML = '';
+        snapshot.docs.slice(0, 10).forEach(doc => {
+          homeList.appendChild(renderItem(doc.data()));
+        });
+
+        // ── Actualiza Captura (últimas 20) ──
+        captureList.innerHTML = '';
+        snapshot.forEach(doc => {
+          captureList.appendChild(renderItem(doc.data()));
         });
       },
       err => {
-        list.innerHTML = `
+        const errHtml = `
           <div class="m-factura">
-            <div style="font-size:11px;color:var(--bad);">
-              Error Firestore: ${esc(err.message)}
-            </div>
+            <div style="font-size:11px;color:var(--bad);">Error Firestore: ${esc(err.message)}</div>
           </div>`;
+        homeList.innerHTML    = errHtml;
+        captureList.innerHTML = errHtml;
       }
     );
 }
@@ -1171,8 +1159,8 @@ function esc(str) {
     .replace(/"/g, '&quot;');
 }
 
-// ── Init ─────────────────────────────────────────────────────────────────────
-initHomeDashboard();
+// ── Init — arranca al cargar la página ───────────────────────────────────────
+initFirestoreListener();
 </script>
 </body>
 </html>
