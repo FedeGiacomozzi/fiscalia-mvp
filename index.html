@@ -864,7 +864,7 @@ body {
           <div class="web-page-sub">Mayo 2026 · Estudio Fernández y Asociados · 32 clientes activos</div>
           <div class="web-stats">
             <div class="web-stat v"><div class="web-stat-label">Clientes activos</div><div class="web-stat-val">32</div><div class="web-stat-delta up">↑ +4 este mes</div></div>
-            <div class="web-stat t"><div class="web-stat-label">Facturas procesadas</div><div class="web-stat-val">1.847</div><div class="web-stat-delta up">↑ 94% vía ARCA</div></div>
+            <div class="web-stat t"><div class="web-stat-label">Facturas procesadas</div><div class="web-stat-val" id="web-facturas-total">1.847</div><div class="web-stat-delta up">↑ 94% vía ARCA</div></div>
             <div class="web-stat w"><div class="web-stat-label">Pendientes revisión</div><div class="web-stat-val">8</div><div class="web-stat-delta down">↓ Requieren acción</div></div>
             <div class="web-stat e"><div class="web-stat-label">Horas ahorradas</div><div class="web-stat-val">63h</div><div class="web-stat-delta up">↑ Este mes</div></div>
           </div>
@@ -874,7 +874,8 @@ body {
           </div>
           <table class="web-table">
             <thead><tr><th>Cliente</th><th>Facturas</th><th>Total gastado</th><th>IVA estimado</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody>
+            <tbody id="web-tabla-clientes">
+              <!-- fila real de Firestore se inserta aquí dinámicamente -->
               <tr><td><div class="client-name">Daniela Kostic</div><div class="client-type">RI · Gastronomía</div></td><td>47</td><td>$2.1M</td><td style="color:var(--warn);">$148.200</td><td><span class="status-pill status-ok">● Al día</span></td><td><button class="web-action-btn" onclick="show('web-client')">Ver →</button></td></tr>
               <tr><td><div class="client-name">Martín Rodríguez</div><div class="client-type">Monotributista · Servicios</div></td><td>12</td><td>$480K</td><td style="color:var(--good);">$0</td><td><span class="status-pill status-ok">● Al día</span></td><td><button class="web-action-btn">Ver →</button></td></tr>
               <tr><td><div class="client-name">Ferretería El Tornillo</div><div class="client-type">RI · Comercio</div></td><td>89</td><td>$5.8M</td><td style="color:var(--warn);">$320.400</td><td><span class="status-pill status-warn">● Revisar</span></td><td><button class="web-action-btn">Ver →</button></td></tr>
@@ -1228,8 +1229,87 @@ function esc(str) {
     .replace(/"/g, '&quot;');
 }
 
+// ── Web Dashboard — fila real + KPI desde Firestore ─────────────────────────
+function initWebDashboard() {
+  db.collection('facturas')
+    .orderBy('timestamp', 'desc')
+    .onSnapshot(snapshot => {
+      const now      = new Date();
+      const curYear  = now.getFullYear();
+      const curMonth = now.getMonth();
+
+      let totalGastado = 0, ivaEstimado = 0, hasThisMonth = false;
+
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        totalGastado += (d.monto_total || 0);
+        ivaEstimado  += (d.monto_total || 0) * 0.21;
+
+        if (d.timestamp?.toDate) {
+          const ts = d.timestamp.toDate();
+          if (ts.getFullYear() === curYear && ts.getMonth() === curMonth)
+            hasThisMonth = true;
+        } else if (d.fecha) {
+          const p = d.fecha.split('/');
+          if (p.length === 3 &&
+              parseInt(p[2]) === curYear &&
+              (parseInt(p[1]) - 1) === curMonth)
+            hasThisMonth = true;
+        }
+      });
+
+      const totalFacturas = snapshot.size;
+
+      const fmt = n => new Intl.NumberFormat('es-AR', {
+        style: 'currency', currency: 'ARS', maximumFractionDigits: 0
+      }).format(n);
+      const fmtShort = n => {
+        if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M';
+        if (n >= 1_000)     return '$' + Math.round(n / 1_000) + 'K';
+        return fmt(n);
+      };
+
+      // Actualizar KPI "Facturas procesadas" = hardcoded + reales
+      const kpi = document.getElementById('web-facturas-total');
+      if (kpi) kpi.textContent = (1847 + totalFacturas).toLocaleString('es-AR');
+
+      // Insertar/actualizar fila real en la tabla
+      const tbody = document.getElementById('web-tabla-clientes');
+      if (!tbody) return;
+
+      let row = document.getElementById('web-real-row');
+      if (!row) {
+        row = document.createElement('tr');
+        row.id = 'web-real-row';
+        tbody.insertBefore(row, tbody.firstChild);
+      }
+
+      const estadoHtml = hasThisMonth
+        ? `<span class="status-pill status-ok">● Al día</span>`
+        : `<span class="status-pill status-err">● Sin actividad</span>`;
+      const ivaColor = ivaEstimado > 100_000 ? 'var(--bad)' : 'var(--warn)';
+
+      row.innerHTML = `
+        <td>
+          <div class="client-name">
+            Daniela K.
+            <span style="font-size:9px;background:rgba(0,245,196,0.12);color:var(--acc);
+                         padding:2px 6px;border-radius:20px;font-weight:700;margin-left:4px;">REAL</span>
+          </div>
+          <div class="client-type">RI · Datos desde Firestore</div>
+        </td>
+        <td>${totalFacturas}</td>
+        <td>${fmtShort(totalGastado)}</td>
+        <td style="color:${ivaColor};">${fmtShort(ivaEstimado)}</td>
+        <td>${estadoHtml}</td>
+        <td><button class="web-action-btn" onclick="show('web-client')">Ver →</button></td>
+      `;
+    }, err => console.error('Web dashboard error:', err));
+}
+
 // ── Init — arranca al cargar la página ───────────────────────────────────────
 initFirestoreListener();
+initWebDashboard();
 </script>
 </body>
 </html>
