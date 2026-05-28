@@ -2,13 +2,15 @@ import base64
 import json
 import os
 import re
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import secretmanager
 from openai import OpenAI
 
-from firestore_client import guardar_factura
+from alertas import evaluar_y_enviar_alertas
+from firestore_client import get_db, guardar_factura
 
 app = FastAPI(title="FiscalIA API")
 
@@ -108,3 +110,38 @@ async def procesar_factura(imagen: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Error al guardar en Firestore: {exc}")
 
     return {"id": doc_id, **datos}
+
+
+@app.get("/verificar-alertas")
+async def verificar_alertas():
+    now = datetime.now(timezone.utc)
+    inicio_mes = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+    if now.month == 12:
+        inicio_prox = datetime(now.year + 1, 1, 1, tzinfo=timezone.utc)
+    else:
+        inicio_prox = datetime(now.year, now.month + 1, 1, tzinfo=timezone.utc)
+
+    try:
+        docs = (
+            get_db()
+            .collection("facturas")
+            .where("timestamp", ">=", inicio_mes)
+            .where("timestamp", "<", inicio_prox)
+            .get()
+        )
+        facturas = [doc.to_dict() for doc in docs]
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Error al leer Firestore: {exc}")
+
+    try:
+        alertas = evaluar_y_enviar_alertas(facturas)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Error al procesar alertas: {exc}")
+
+    return {
+        "mes": now.strftime("%Y-%m"),
+        "facturas_del_mes": len(facturas),
+        "alertas_disparadas": len(alertas),
+        "mail_enviado": len(alertas) > 0,
+        "alertas": alertas,
+    }
