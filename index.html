@@ -1499,6 +1499,8 @@ function initWebDashboard() {
       _facturasDocs = snapshot.docs.map(d => d.data());
       renderAlerts(_facturasDocs);
       populatePeriodSelect();
+      const fotoCountEl = document.getElementById('fotoCount');
+      if (fotoCountEl) fotoCountEl.textContent = snapshot.size;
 
       const now      = new Date();
       const curYear  = now.getFullYear();
