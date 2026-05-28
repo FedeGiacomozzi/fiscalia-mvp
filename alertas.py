@@ -7,7 +7,7 @@ TOPE_ANUAL = 50_000_000
 TOPE_MENSUAL = TOPE_ANUAL / 12        # ~$4_166_667
 TOPE_FACTURAS = 50
 UMBRAL = 0.80
-DESTINATARIO = "Fede.Giacomozzi@gmail.com"
+DESTINATARIO = "fede.giacomozzi@gmail.com"
 
 _resend_api_key: str | None = None
 
