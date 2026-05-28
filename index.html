@@ -915,6 +915,34 @@ body {
               <div class="web-stat w"><div class="web-stat-label">IVA Estimado</div><div class="web-stat-val" id="rep-iva">—</div></div>
             </div>
 
+            <!-- Tracker Monotributo -->
+            <div style="background:var(--s2);border-radius:12px;padding:16px 18px;border:1px solid var(--border2);margin-bottom:18px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <div class="web-table-title">Seguimiento Monotributo anual</div>
+                <div id="rep-mono-pct" style="font-size:11px;color:var(--t3);">—</div>
+              </div>
+              <div style="height:10px;background:var(--s3);border-radius:10px;overflow:hidden;margin-bottom:8px;">
+                <div id="rep-mono-bar" style="height:100%;border-radius:10px;width:0%;transition:width 0.6s ease;background:linear-gradient(90deg,var(--good),#00c8a0);"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);">
+                <span>$0</span>
+                <span id="rep-mono-acum" style="color:var(--text);font-weight:600;">—</span>
+                <span>Límite $50M/año</span>
+              </div>
+            </div>
+
+            <!-- Evolución mensual + Tipo comprobante -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
+              <div style="background:var(--s2);border-radius:12px;padding:16px 18px;border:1px solid var(--border2);">
+                <div class="web-table-title" style="margin-bottom:14px;">Evolución mensual</div>
+                <canvas id="rep-monthly-chart" height="140"></canvas>
+              </div>
+              <div style="background:var(--s2);border-radius:12px;padding:16px 18px;border:1px solid var(--border2);">
+                <div class="web-table-title" style="margin-bottom:14px;">Tipo de comprobante</div>
+                <canvas id="rep-tipo-chart" height="140"></canvas>
+              </div>
+            </div>
+
             <!-- Gráfico de barras -->
             <div style="background:var(--s2);border-radius:12px;padding:16px 18px;border:1px solid var(--border2);margin-bottom:18px;">
               <div class="web-table-title" style="margin-bottom:14px;">Gastos por categoría</div>
@@ -1069,8 +1097,10 @@ const BACKEND_URL = "https://fiscalia-backend-405077528314.southamerica-east1.ru
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-let _facturasDocs = [];
-let _repChart     = null;
+let _facturasDocs    = [];
+let _repChart        = null;
+let _repMonthlyChart = null;
+let _repTipoChart    = null;
 
 // ── Screen navigation ────────────────────────────────────────────────────────
 function show(id) {
@@ -1696,6 +1726,8 @@ function showWebPanel(panel) {
 const _clientData = {
   daniela: {
     cats: { servicios:480000, insumos:820000, alquiler:210000, logistica:95000, otros:62000 },
+    monthly: { labels:['Dic 25','Ene 26','Feb 26','Mar 26','Abr 26','May 26'], values:[1240000,1380000,1520000,1610000,1750000,1667000] },
+    tipo: { A:28, B:12, C:7 },
     rows: [
       { proveedor:'Distribuidora Norte', fecha:'15/05/2026', numero_factura:'0001-00034521', categoria:'insumos',   tipo:'A', monto_total:42300 },
       { proveedor:'Alquileres Plaza',    fecha:'01/05/2026', numero_factura:'0002-00001200', categoria:'alquiler',  tipo:'A', monto_total:105000 },
@@ -1706,6 +1738,8 @@ const _clientData = {
   },
   martin: {
     cats: { servicios:310000, insumos:45000, alquiler:0, logistica:28000, otros:15000 },
+    monthly: { labels:['Dic 25','Ene 26','Feb 26','Mar 26','Abr 26','May 26'], values:[310000,295000,340000,280000,398000,398000] },
+    tipo: { A:9, B:2, C:1 },
     rows: [
       { proveedor:'CloudHost SA',      fecha:'18/05/2026', numero_factura:'0001-00112233', categoria:'servicios', tipo:'A', monto_total:22000 },
       { proveedor:'Papelería Norte',   fecha:'12/05/2026', numero_factura:'0001-00045001', categoria:'insumos',   tipo:'B', monto_total:4500 },
@@ -1716,6 +1750,8 @@ const _clientData = {
   },
   ferreteria: {
     cats: { servicios:120000, insumos:3200000, alquiler:480000, logistica:890000, otros:42000 },
+    monthly: { labels:['Dic 25','Ene 26','Feb 26','Mar 26','Abr 26','May 26'], values:[3800000,4100000,4400000,4900000,5200000,4732000] },
+    tipo: { A:67, B:18, C:4 },
     rows: [
       { proveedor:'Aceros del Sur',    fecha:'20/05/2026', numero_factura:'0001-00234100', categoria:'insumos',   tipo:'A', monto_total:189000 },
       { proveedor:'Transporte Rápido', fecha:'15/05/2026', numero_factura:'0004-00009100', categoria:'logistica', tipo:'A', monto_total:67000 },
@@ -1726,6 +1762,8 @@ const _clientData = {
   },
   laura: {
     cats: { servicios:145000, insumos:32000, alquiler:0, logistica:0, otros:18000 },
+    monthly: { labels:['Dic 25','Ene 26','Feb 26','Mar 26','Abr 26','May 26'], values:[160000,140000,195000,130000,210000,195000] },
+    tipo: { A:5, B:2, C:1 },
     rows: [
       { proveedor:'Laboratorio Sur',    fecha:'10/05/2026', numero_factura:'0001-00023400', categoria:'servicios', tipo:'B', monto_total:28000 },
       { proveedor:'Insumos Médicos',    fecha:'03/05/2026', numero_factura:'0001-00056700', categoria:'insumos',   tipo:'A', monto_total:12500 },
@@ -1736,6 +1774,8 @@ const _clientData = {
   },
   tech: {
     cats: { servicios:7800000, insumos:1200000, alquiler:960000, logistica:380000, otros:95000 },
+    monthly: { labels:['Dic 25','Ene 26','Feb 26','Mar 26','Abr 26','May 26'], values:[8200000,9100000,9800000,10400000,11200000,10435000] },
+    tipo: { A:98, B:28, C:8 },
     rows: [
       { proveedor:'Amazon Web Services', fecha:'22/05/2026', numero_factura:'INV-20260522',  categoria:'servicios', tipo:'A', monto_total:485000 },
       { proveedor:'Cisco Systems',       fecha:'18/05/2026', numero_factura:'0001-00345800', categoria:'insumos',   tipo:'A', monto_total:320000 },
@@ -1796,6 +1836,78 @@ function renderRepChart(cats) {
   });
 }
 
+function renderMonthlyChart(labels, values) {
+  const ctx = document.getElementById('rep-monthly-chart');
+  if (!ctx) return;
+  if (_repMonthlyChart) { _repMonthlyChart.destroy(); _repMonthlyChart = null; }
+  _repMonthlyChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: 'rgba(0,245,196,0.85)',
+        backgroundColor: 'rgba(0,245,196,0.07)',
+        borderWidth: 2, fill: true, tension: 0.4,
+        pointBackgroundColor: 'rgba(0,245,196,1)', pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(c.parsed.y) } }
+      },
+      scales: {
+        x: { grid:{color:'rgba(255,255,255,0.06)'}, ticks:{color:'#9ca3af',font:{size:10}} },
+        y: { grid:{color:'rgba(255,255,255,0.06)'}, ticks:{color:'#9ca3af',font:{size:10},
+          callback: v => v>=1_000_000 ? '$'+(v/1_000_000).toFixed(1)+'M' : v>=1_000 ? '$'+Math.round(v/1_000)+'K' : '$'+v } }
+      }
+    }
+  });
+}
+
+function renderTipoChart(tipo) {
+  const ctx = document.getElementById('rep-tipo-chart');
+  if (!ctx) return;
+  if (_repTipoChart) { _repTipoChart.destroy(); _repTipoChart = null; }
+  const total = (tipo.A||0) + (tipo.B||0) + (tipo.C||0);
+  if (!total) return;
+  _repTipoChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Factura A', 'Factura B', 'Factura C'],
+      datasets: [{ data: [tipo.A||0, tipo.B||0, tipo.C||0],
+        backgroundColor: ['rgba(0,245,196,0.75)','rgba(124,58,237,0.75)','rgba(255,209,102,0.75)'],
+        borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, cutout: '65%',
+      plugins: {
+        legend: { position:'bottom', labels:{color:'#9ca3af',font:{size:10},padding:10} },
+        tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed} (${Math.round(c.parsed/total*100)}%)` } }
+      }
+    }
+  });
+}
+
+function renderMonoTracker(acumulado) {
+  const LIMITE = 50_000_000;
+  const pct = Math.min(acumulado / LIMITE * 100, 100);
+  const bar   = document.getElementById('rep-mono-bar');
+  const pctEl = document.getElementById('rep-mono-pct');
+  const acumEl= document.getElementById('rep-mono-acum');
+  const fmtS  = n => n>=1_000_000 ? '$'+(n/1_000_000).toFixed(1)+'M' : n>=1_000 ? '$'+Math.round(n/1_000)+'K' : '$'+n;
+  if (bar) {
+    bar.style.width = pct + '%';
+    bar.style.background = pct > 85 ? 'linear-gradient(90deg,var(--bad),#ff6b6b)'
+                         : pct > 65 ? 'linear-gradient(90deg,var(--warn),#ffa040)'
+                         : 'linear-gradient(90deg,var(--good),#00c8a0)';
+  }
+  if (pctEl)  pctEl.textContent  = pct.toFixed(1) + '% del límite anual';
+  if (acumEl) acumEl.textContent = fmtS(acumulado) + ' acumulados';
+}
+
 function updateReport() {
   const sel = document.getElementById('rep-client-select');
   const key = sel ? sel.value : 'real';
@@ -1846,6 +1958,27 @@ function updateReport() {
     set('rep-total', fmtShort(totalGastado));
     set('rep-iva',   fmtShort(ivaEstimado));
     renderRepChart(cats);
+
+    // Evolución mensual desde todos los docs (sin filtro de período)
+    const MESES_S = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const monthly = {};
+    _facturasDocs.forEach(d => {
+      let k = null;
+      if (d.timestamp?.toDate) { const ts=d.timestamp.toDate(); k=`${ts.getFullYear()}-${String(ts.getMonth()+1).padStart(2,'0')}`; }
+      else if (d.fecha) { const p=d.fecha.split('/'); if(p.length===3) k=`${p[2]}-${String(p[1]).padStart(2,'0')}`; }
+      if (k) monthly[k] = (monthly[k]||0) + (d.monto_total||0);
+    });
+    const mKeys = Object.keys(monthly).sort().slice(-6);
+    renderMonthlyChart(mKeys.map(k=>{ const[y,m]=k.split('-'); return MESES_S[parseInt(m)-1]+' '+y.slice(2); }), mKeys.map(k=>monthly[k]));
+
+    // Tipo de comprobante
+    const tipo = { A:0, B:0, C:0 };
+    _facturasDocs.forEach(d => { if (d.tipo && tipo[d.tipo]!==undefined) tipo[d.tipo]++; });
+    renderTipoChart(tipo);
+
+    // Monotributo tracker (acumulado anual = todos los docs)
+    renderMonoTracker(_facturasDocs.reduce((s,d) => s+(d.monto_total||0), 0));
+
     const tbody = document.getElementById('rep-table-body');
     if (!tbody) return;
     if (!docs.length) {
@@ -1869,6 +2002,9 @@ function updateReport() {
     set('rep-total', fmtShort(totalGastado));
     set('rep-iva',   fmtShort(totalGastado * 0.21));
     renderRepChart(cd.cats);
+    renderMonthlyChart(cd.monthly.labels, cd.monthly.values);
+    renderTipoChart(cd.tipo);
+    renderMonoTracker(cd.monthly.values.reduce((a,b)=>a+b,0));
     const tbody = document.getElementById('rep-table-body');
     if (!tbody) return;
     tbody.innerHTML = cd.rows.map(d => `
