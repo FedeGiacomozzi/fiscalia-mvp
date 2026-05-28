@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import secretmanager
 from openai import OpenAI
 
-from alertas import evaluar_y_enviar_alertas
+from alertas import evaluar_y_enviar_alertas, send_test_mail
 from firestore_client import get_db, guardar_factura
 
 app = FastAPI(title="FiscalIA API")
@@ -145,3 +145,12 @@ async def verificar_alertas():
         "mail_enviado": len(alertas) > 0,
         "alertas": alertas,
     }
+
+
+@app.get("/test-mail")
+async def test_mail():
+    try:
+        send_test_mail()
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Error al enviar mail: {exc}")
+    return {"ok": True, "mensaje": "Mail de prueba enviado a Fede.Giacomozzi@gmail.com"}

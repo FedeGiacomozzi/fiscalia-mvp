@@ -27,6 +27,22 @@ def _get_resend_api_key() -> str:
     return _resend_api_key
 
 
+def send_test_mail() -> None:
+    resend.api_key = _get_resend_api_key()
+    resend.Emails.send({
+        "from": "FiscalIA <onboarding@resend.dev>",
+        "to": [DESTINATARIO],
+        "subject": "FiscalIA — test de notificación funcionando",
+        "html": """
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
+          <h2 style="color:#7C3AED;">✅ FiscalIA</h2>
+          <p>El sistema de notificaciones por mail está funcionando correctamente.</p>
+          <p style="color:#aaa;font-size:11px;">FiscalIA MVP · mensaje de prueba</p>
+        </div>
+        """,
+    })
+
+
 def evaluar_y_enviar_alertas(facturas: list[dict]) -> list[dict]:
     """
     Recibe facturas del mes actual, evalúa dos umbrales al 80%:

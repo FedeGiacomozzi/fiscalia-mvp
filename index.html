@@ -1030,6 +1030,20 @@ body {
   <div class="footer-sub">Negocios Digitales 2026 · Grupo 7 · Sprint 1 — Wireframes interactivos</div>
 </div>
 
+<!-- Botón demo test-mail (fuera del phone shell) -->
+<div style="position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+  <div id="test-mail-status" style="display:none;background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:8px 14px;font-size:12px;"></div>
+  <button id="test-mail-btn" onclick="dispararTestMail()" style="
+    background:linear-gradient(135deg,var(--p),var(--p2));
+    border:none;border-radius:12px;padding:11px 20px;
+    font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+    color:white;cursor:pointer;
+    box-shadow:0 4px 24px rgba(124,58,237,0.45);
+    display:flex;align-items:center;gap:8px;
+    transition:opacity 0.15s;
+  ">📧 Test mail</button>
+</div>
+
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
@@ -1871,6 +1885,26 @@ function updateReport() {
 initFirestoreListener();
 initWebDashboard();
 initWebClientView();
+
+// ── Test mail ─────────────────────────────────────────────────────────────────
+async function dispararTestMail() {
+  const btn    = document.getElementById('test-mail-btn');
+  const status = document.getElementById('test-mail-status');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Enviando…';
+  status.style.display = 'none';
+  try {
+    const res = await fetch(BACKEND_URL.replace('/procesar-factura', '/test-mail'));
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error ' + res.status);
+    status.innerHTML = '✅ <span style="color:var(--acc);">Mail enviado a Fede.Giacomozzi@gmail.com</span>';
+  } catch(e) {
+    status.innerHTML = '❌ <span style="color:var(--bad);">' + esc(e.message) + '</span>';
+  }
+  status.style.display = 'block';
+  btn.disabled = false;
+  btn.innerHTML = '📧 Test mail';
+}
 </script>
 </body>
 </html>
