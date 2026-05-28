@@ -1033,9 +1033,9 @@ body {
           <div class="web-export-bar">
             <div class="web-export-info"><div class="web-export-title">Exportar al ERP</div><div class="web-export-sub" id="web-client-export-sub">Cargando…</div></div>
             <div class="web-export-btns">
-              <button class="web-action-btn">CSV genérico</button>
-              <button class="web-action-btn">Bejerman</button>
-              <button class="web-action-btn primary">Exportar a Tango →</button>
+              <button class="web-action-btn" onclick="exportClientCSV('csv')">CSV genérico</button>
+              <button class="web-action-btn" onclick="exportClientCSV('bejerman')">Bejerman</button>
+              <button class="web-action-btn primary" onclick="exportClientCSV('tango')">Exportar a Tango →</button>
             </div>
           </div>
         </div>
@@ -1098,6 +1098,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let _facturasDocs    = [];
+let _clientViewDocs  = [];
 let _repChart        = null;
 let _repMonthlyChart = null;
 let _repTipoChart    = null;
@@ -1642,9 +1643,11 @@ function initWebClientView() {
 
       let totalGastado = 0, ivaCredito = 0, aprobadas = 0, revisar = 0;
       container.innerHTML = '';
+      _clientViewDocs = [];
 
       snapshot.forEach(doc => {
         const d = doc.data();
+        _clientViewDocs.push(d);
         totalGastado += (d.monto_total || 0);
         if (d.tipo === 'A') ivaCredito += (d.iva_monto || 0);
 
@@ -2017,6 +2020,50 @@ function updateReport() {
         <td style="text-align:right;color:var(--acc);">${fmt(d.monto_total)}</td>
       </tr>`).join('');
   }
+}
+
+// ── Vista Cliente — exportar comprobantes ────────────────────────────────────
+function exportClientCSV(format) {
+  const docs = _clientViewDocs;
+  if (!docs.length) { alert('No hay comprobantes para exportar.'); return; }
+
+  const fmt = n => n != null ? n : '';
+  let headers, rows, filename;
+
+  if (format === 'tango') {
+    headers = ['Tipo Cbte','Letra','Número','Fecha','CUIT Proveedor','Razón Social','Neto Gravado','IVA','Total','Cuenta Contable'];
+    rows = docs.map(d => [
+      'FC', d.tipo || '', d.numero_factura || '', d.fecha || '',
+      '', d.proveedor || '',
+      fmt(d.monto_total ? (d.monto_total - (d.iva_monto||0)) : null),
+      fmt(d.iva_monto), fmt(d.monto_total), d.categoria || '',
+    ]);
+    filename = 'tango_export.csv';
+  } else if (format === 'bejerman') {
+    headers = ['Comprobante','Tipo','Fecha','Proveedor','Neto','IVA','Total','Rubro'];
+    rows = docs.map(d => [
+      d.numero_factura || '', d.tipo || '', d.fecha || '', d.proveedor || '',
+      fmt(d.monto_total ? (d.monto_total - (d.iva_monto||0)) : null),
+      fmt(d.iva_monto), fmt(d.monto_total), d.categoria || '',
+    ]);
+    filename = 'bejerman_export.csv';
+  } else {
+    headers = ['Proveedor','Fecha','N° Factura','Categoría','Tipo','Monto Total','IVA'];
+    rows = docs.map(d => [
+      d.proveedor || '', d.fecha || '', d.numero_factura || '',
+      d.categoria || '', d.tipo || '', fmt(d.monto_total), fmt(d.iva_monto),
+    ]);
+    filename = 'fiscalia_comprobantes.csv';
+  }
+
+  const escape = v => `"${String(v).replace(/"/g,'""')}"`;
+  const csv = [headers.map(escape).join(','), ...rows.map(r => r.map(escape).join(','))].join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
 // ── Init — arranca al cargar la página ───────────────────────────────────────
